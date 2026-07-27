@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>上下九步行街 - Q版互动游乐园导览图</title>
+    
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <script src="https://cdn.bootcdn.net/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #fff8ef; overflow: hidden; }
+        #map { height: 100vh; width: 100vw; z-index: 1; }
+
+        /* 顶部搜索栏与集章面板容器 */
+        #top-bar {
+            position: fixed; top: 15px; left: 50%; transform: translateX(-50%);
+            z-index: 1500; display: flex; gap: 10px; width: 92vw; max-width: 500px;
+            align-items: center;
+        }
+
+        /* 搜索框样式 */
+        .search-box-container { position: relative; flex: 1; }
+        .search-input {
+            width: 100%; padding: 10px 16px 10px 38px; border-radius: 25px;
+            border: 2px solid #ffb74d; background: #ffffff; font-size: 13px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); outline: none;
+            box-sizing: border-box; color: #5d4037; font-weight: 500;
+        }
+        .search-icon {
+            position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+            font-size: 14px; color: #ff9800; pointer-events: none;
+        }
+        #search-results {
+            position: absolute; top: 45px; left: 0; right: 0;
+            background: white; border-radius: 16px; border: 2px solid #ffb74d;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15); max-height: 220px; overflow-y: auto;
+            display: none; z-index: 2000; padding: 6px;
+        }
+        .search-item {
+            padding: 8px 12px; font-size: 13px; color: #5d4037; border-radius: 10px;
+            cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+        }
+        .search-item:hover { background: #fff3e0; color: #e65100; font-weight: bold; }
+
+        /* 右上角“集章打卡馆”面板 */
+        .stamp-container { position: relative; }
+        #stamp-btn {
+            background: #ffffff; padding: 8px 12px; border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); font-size: 12px; font-weight: bold;
+            color: #d84315; border: 2px solid #ff7043; display: flex; align-items: center;
+            gap: 4px; cursor: pointer; white-space: nowrap;
+        }
+        #stamp-dropdown {
+            position: absolute; top: 45px; right: 0; width: 250px;
+            background: white; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            border: 3px solid #ffb74d; display: none; flex-direction: column;
+            max-height: 60vh; overflow: hidden; z-index: 2000;
+        }
+        #stamp-dropdown.active { display: flex; }
+        .dropdown-header {
+            background: #fff3e0; padding: 10px 14px; font-size: 12px; font-weight: bold;
+            color: #d84315; border-bottom: 2px solid #ffe0b2; display: flex;
+            justify-content: space-between; align-items: center;
+        }
+        .dropdown-list { overflow-y: auto; padding: 8px; max-height: calc(60vh - 45px); }
+        .stamp-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 8px 10px; border-radius: 10px; margin-bottom: 4px;
+            font-size: 12px; cursor: pointer; transition: background 0.2s;
+        }
+        .stamp-item:hover { background: #fff8ef; }
+        .stamp-item.visited { color: #2e7d32; font-weight: bold; background: #e8f5e9; }
+        .stamp-item.unvisited { color: #8d6e63; }
+
+        /* 探险路线分类按钮 */
+        #route-panel {
+            position: fixed; top: 70px; left: 50%; transform: translateX(-50%);
+            z-index: 1000; background: rgba(255, 255, 255, 0.95); padding: 6px 12px;
+            border-radius: 25px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            display: flex; gap: 6px; flex-wrap: wrap; justify-content: center;
+            max-width: 92vw; border: 2px solid #ffe0b2;
+        }
+        #route-panel button {
+            border: none; padding: 4px 10px; border-radius: 15px;
+            cursor: pointer; font-weight: bold; font-size: 11px;
+            transition: transform 0.1s;
+        }
+        #route-panel button:active { transform: scale(0.95); }
+
+        /* 左上角Q版图例说明 */
+        #legend {
+            position: fixed; top: 125px; left: 15px;
+            z-index: 1000; background: #fff; padding: 8px 12px;
+            border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            font-size: 11px; color: #5d4037; line-height: 1.5;
+            border: 2px dashed #ffb74d;
+        }
+        .legend-item { display: flex; align-items: center; gap: 5px; margin-bottom: 2px; }
+        .legend-icon {
+            width: 18px; height: 18px; border-radius: 50%; display: inline-flex;
+            align-items: center; justify-content: center; font-size: 10px; color: white; border: 1px solid white;
+        }
+
+        /* 右下角悬浮操作区（定位按钮 + 指南针） */
+        .controls-right-bottom {
+            position: fixed; bottom: 30px; right: 20px;
+            z-index: 1000; display: flex; flex-direction: column; gap: 10px;
+        }
+        .btn-floating {
+            background: #ffffff; width: 44px; height: 44px;
+            border-radius: 50%; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; cursor: pointer; border: 2px solid #ffb74d;
+            transition: transform 0.2s;
+        }
+        .btn-floating:active { transform: scale(0.9); }
+
+        /* 实时位置高亮光圈 */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 0.8; }
+            100% { transform: scale(2.2); opacity: 0; }
+        }
+        .user-location-marker {
+            position: relative; width: 20px; height: 20px;
+            background: #29b6f6; border: 3px solid #ffffff;
+            border-radius: 50%; box-shadow: 0 0 10px rgba(41,182,246,0.8);
+        }
+        .user-location-marker::after {
+            content: ''; position: absolute; top: -5px; left: -5px;
+            width: 24px; height: 24px; border-radius: 50%;
+            border: 3px solid #29b6f6; animation: pulse-ring 1.8s infinite ease-out;
+        }
+
+        /* 气泡跳动动画 */
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        .q-marker { animation: bounce 2s infinite ease-in-out; }
+        .q-marker.stamped { filter: drop-shadow(0 0 6px #ffeb3b); }
+
+        /* 底部Q版卡片样式 */
+        .info-card {
+            position: fixed; bottom: -500px; left: 0; right: 0;
+            background: #ffffff; padding: 20px;
+            border-radius: 24px 24px 0 0;
+            box-shadow: 0 -8px 25px rgba(0,0,0,0.15);
+            transition: bottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1100; max-height: 60vh; overflow-y: auto;
+            border-top: 5px solid #ffb74d;
+        }
+        .info-card.active { bottom: 0; }
+        .spot-img {
+            width: 100%; height: auto; max-height: 160px;
+            object-fit: cover; border-radius: 14px; margin-bottom: 10px;
+            background: #fff8ef; border: 2px solid #ffe0b2;
+        }
+        .info-card h2 { margin: 0 0 6px 0; font-size: 18px; color: #d84315; font-weight: 800; }
+        .distance-tag { 
+            display: inline-block; background: #fff3e0; color: #e65100; 
+            padding: 3px 8px; border-radius: 8px; font-size: 11px; font-weight: bold; margin-bottom: 8px;
+        }
+        .info-card p { margin: 0 0 16px 0; color: #6d4c41; font-size: 12px; line-height: 1.6; }
+        
+        .btn-group { display: flex; gap: 8px; margin-bottom: 8px; }
+        .nav-btn {
+            background: #ff7043; color: white; border: none;
+            padding: 10px 12px; border-radius: 12px; flex: 1;
+            font-size: 13px; cursor: pointer; font-weight: bold;
+            box-shadow: 0 4px 12px rgba(255, 112, 67, 0.3);
+        }
+        .stamp-action-btn {
+            background: #4caf50; color: white; border: none;
+            padding: 10px 12px; border-radius: 12px; flex: 1;
+            font-size: 13px; cursor: pointer; font-weight: bold;
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        /* 弹窗通用样式 */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.5); z-index: 3000; display: none;
+            align-items: center; justify-content: center; padding: 20px;
+            box-sizing: border-box;
+        }
+        .modal-card {
+            background: white; padding: 25px; border-radius: 24px; text-align: center;
+            max-width: 320px; width: 100%; border: 4px solid #ffb74d; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 顶部搜索栏 + 集章入口 -->
+    <div id="top-bar">
+        <div class="search-box-container">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="search-input" class="search-input" placeholder="搜索景点/美食 (如: 双皮奶)..." oninput="handleSearch()">
+            <div id="search-results"></div>
+        </div>
+
+        <div class="stamp-container">
+            <div id="stamp-btn" onclick="toggleDropdown(event)">
+                <span>🏆 <span id="stamp-count">0</span>/11</span> 🔽
+            </div>
+            <div id="stamp-dropdown">
+                <div class="dropdown-header">
+                    <span>🎯 打卡清单足迹</span>
+                    <span style="font-size: 10px; color: #888;">点击直达</span>
+                </div>
+                <div id="dropdown-list" class="dropdown-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 探险主题路线 -->
+    <div id="route-panel">
+        <button onclick="drawRoute('food')" style="background:#ffa726; color:white;">🍡 吃货线</button>
+        <button onclick="drawRoute('history')" style="background:#42a5f5; color:white;">🏛️ 古迹线</button>
+        <button onclick="drawRoute('folk')" style="background:#ec407a; color:white;">📸 街拍线</button>
+        <button onclick="drawRoute('shopping')" style="background:#ab47bc; color:white;">🛍️ 伴手礼</button>
+        <button onclick="clearRoute()" style="background:#e0e0e0; color:#555;">清除路线</button>
+    </div>
+
+    <!-- 左上角Q版图例说明 -->
+    <div id="legend">
+        <b>🎡 导览图例</b>
+        <div class="legend-item"><span class="legend-icon" style="background:#ec407a;">🏰</span>核心地标</div>
+        <div class="legend-item"><span class="legend-icon" style="background:#42a5f5;">🏛️</span>历史古迹</div>
+        <div class="legend-item"><span class="legend-icon" style="background:#ffa726;">🍡</span>特色美食</div>
+        <div class="legend-item"><span class="legend-icon" style="background:#ab47bc;">📜</span>人文旧址</div>
+    </div>
+
+    <!-- 右下角悬浮按钮（定位按钮 + 指南针） -->
+    <div class="controls-right-bottom">
+        <div class="btn-floating" onclick="locateUser(true)" title="定位我的位置">🎯</div>
+        <div class="btn-floating" onclick="resetNorth()" title="复位中心">🧭</div>
+    </div>
+
+    <!-- 地图容器 -->
+    <div id="map"></div>
+
+    <!-- 底部Q版详情卡片 -->
+    <div id="spot-info" class="info-card">
+        <img id="spot-img" class="spot-img" src="" alt="景点图片">
+        <h2 id="spot-title">地点名称</h2>
+        <div id="spot-distance" class="distance-tag">🚶 正在计算距离...</div>
+        <p id="spot-desc">详细介绍</p>
+        <div class="btn-group">
+            <button class="nav-btn" onclick="navigateToSelectedSpot()">🗺️ 开启实景导航</button>
+            <button id="stamp-btn-action" class="stamp-action-btn" onclick="triggerManualStamp()">🚩 现场盖章打卡</button>
+        </div>
+        <button style="background: #e0e0e0; color: #666; border: none; padding: 8px; border-radius: 10px; width: 100%; font-size: 12px; cursor: pointer;" onclick="closeCard()">关闭介绍</button>
+    </div>
+
+    <!-- 1. 首次打开询问定位弹窗 -->
+    <div id="location-ask-modal" class="modal-overlay">
+        <div class="modal-card">
+            <h1 style="font-size: 36px; margin: 0 0 10px 0;">📍</h1>
+            <h3 style="color: #d84315; margin: 0 0 8px 0;">开启全景导览之旅</h3>
+            <p style="color: #6d4c41; font-size: 13px; line-height: 1.5; margin-bottom: 20px;">
+                欢迎来到西关！是否允许获取您的实时位置？我们将为您精准计算步行距离并规划最佳路线。
+            </p>
+            <button onclick="acceptLocationPrompt()" style="background: #ff7043; color: white; border: none; padding: 12px; border-radius: 14px; width: 100%; font-size: 14px; font-weight: bold; cursor: pointer; margin-bottom: 8px; box-shadow: 0 4px 12px rgba(255,112,67,0.3);">
+                ✨ 允许定位，开始探险
+            </button>
+            <button onclick="declineLocationPrompt()" style="background: #f5f5f5; color: #888; border: none; padding: 8px; border-radius: 10px; width: 100%; font-size: 12px; cursor: pointer;">
+                暂不开启，直接浏览
+            </button>
+        </div>
+    </div>
+
+    <!-- 2. 成就达成全屏弹窗 -->
+    <div id="achievement-modal" class="modal-overlay" onclick="closeModal()">
+        <div class="modal-card" style="animation: bounce 1s infinite;">
+            <h1 style="font-size: 40px; margin: 0;">🎉</h1>
+            <h3 style="color: #d84315; margin: 10px 0;">恭喜解锁全图鉴！</h3>
+            <p style="color: #6d4c41; font-size: 13px; margin: 0;">你已经逛遍了上下九所有宝藏打卡点，获得“西关资深大玩家”勋章！</p>
+        </div>
+    </div>
+
+    <script>
+        // 1. 初始化地图
+        var map = L.map('map', {
+            center: [23.1155, 113.2435],
+            zoom: 17,
+            minZoom: 15,
+            maxZoom: 20,
+            zoomControl: false
+        });
+
+        // 2. 高德底图 (防止大比例尺白屏)
+        L.tileLayer('https://webrd01.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}', {
+            attribution: '© 高德地图',
+            maxNativeZoom: 18,
+            maxZoom: 20
+        }).addTo(map);
+
+        // 简易音频反馈 (音效)
+        function playChime() {
+            try {
+                var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                var osc = audioCtx.createOscillator();
+                var gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            } catch(e) {}
+        }
+
+        // 3. 景点数据
+        var spots = [
+            { id: 1, name: "千米岭南骑楼群", type: "landmark", lat: 23.1155, lng: 113.2435, desc: "广州规模最大、保存最完整的民国骑楼，满洲窗、罗马柱、灰塑雕花，全天免费打卡。", image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=600&q=80" },
+            { id: 2, name: "陶陶居（第十甫总店）", type: "landmark", lat: 23.1158, lng: 113.2435, desc: "1880年百年茶楼，康有为题字招牌，西关粤曲私伙局聚集地。", image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=600&q=80" },
+            { id: 3, name: "莲香楼", type: "landmark", lat: 23.1160, lng: 113.2440, desc: "“莲蓉第一家”，广式月饼发源地，百年糕点老字号地标建筑。", image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=600&q=80" },
+            { id: 4, name: "平安大戏院", type: "landmark", lat: 23.1165, lng: 113.2460, desc: "1951年老粤剧戏院，复古门头，西关老牌文娱地标。", image: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=600&q=80" },
+            { id: 5, name: "西关民俗青铜雕塑群", type: "landmark", lat: 23.1150, lng: 113.2420, desc: "沿街20余组铜像：鸡公榄小贩、凉茶档、西关小姐、剃头匠，还原老广州市井生活。", image: "https://images.unsplash.com/photo-1590381105924-c72589b9ef3f?auto=format&fit=crop&w=600&q=80" },
+            { id: 6, name: "华林禅寺（西来初地）", type: "history", lat: 23.1132, lng: 113.2450, desc: "1400年岭南古刹，达摩祖师登陆广州之地，内有五百罗汉堂、舍利塔与五眼井。", image: "https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=600&q=80" },
+            { id: 7, name: "锦纶会馆", type: "history", lat: 23.1175, lng: 113.2415, desc: "省级文保单位，清代广州丝绸行业会馆，广府商贸历史展馆，免费参观。", image: "https://images.unsplash.com/photo-1590381105924-c72589b9ef3f?auto=format&fit=crop&w=600&q=80" },
+            { id: 8, name: "南信牛奶甜品专家", type: "food", lat: 23.1152, lng: 113.2428, desc: "上下九排队王，双皮奶和姜撞奶香甜浓郁，西关甜品天花板。", image: "https://images.unsplash.com/photo-1563805042-7684c019e1cb?auto=format&fit=crop&w=600&q=80" },
+            { id: 9, name: "陈添记鱼皮", type: "food", lat: 23.1145, lng: 113.2430, desc: "藏在巷子里的神级小吃，祖传爽鱼皮配上艇仔粥，老广的最爱。", image: "https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=600&q=80" },
+            { id: 10, name: "皇上皇腊味总店", type: "food", lat: 23.1168, lng: 113.2448, desc: "广式腊味老字号，每逢秋冬腊香四溢，广府伴手礼首选。", image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=600&q=80" },
+            { id: 11, name: "文澜巷 & 文澜书院旧址", type: "alley", lat: 23.1140, lng: 113.2435, desc: "十三行富商合建书院，清代西关文人聚集地，麻石青砖墙古巷。", image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=600&q=80" }
+        ];
+
+        var stampedSpots = new Set();
+        var currentSelectedSpot = null;
+        var activeNavigationRoute = null;
+        var currentUserLocation = null; // 存储用户的实时经纬度 [lat, lng]
+        var userLocationMarker = null;  // 用户高亮点 Marker
+
+        // 初始化集章下拉列表
+        function initDropdownList() {
+            var listContainer = document.getElementById('dropdown-list');
+            listContainer.innerHTML = '';
+            spots.forEach(function(spot) {
+                var item = document.createElement('div');
+                item.className = 'stamp-item unvisited';
+                item.id = 'dropdown-item-' + spot.id;
+                item.innerHTML = `<span>⏳ ${spot.name}</span><span style="font-size:10px;">未去</span>`;
+                item.onclick = function() { jumpToSpot(spot); };
+                listContainer.appendChild(item);
+            });
+        }
+        initDropdownList();
+
+        // 渲染地图景点气泡标记
+        spots.forEach(function(spot) {
+            var emoji = spot.type === 'landmark' ? '🏰' : spot.type === 'history' ? '🏛️' : spot.type === 'food' ? '🍡' : '📜';
+            var bgColor = spot.type === 'landmark' ? '#ec407a' : spot.type === 'history' ? '#42a5f5' : spot.type === 'food' ? '#ffa726' : '#ab47bc';
+
+            var iconHtml = `<div id="marker-${spot.id}" class="q-marker" style="background-color: ${bgColor}; color: white; width: 38px; height: 38px; border-radius: 50%; text-align: center; line-height: 38px; font-size: 18px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); border: 3px solid white;">${emoji}</div>`;
+
+            var marker = L.marker([spot.lat, spot.lng], { 
+                icon: L.divIcon({ html: iconHtml, className: '', iconSize: [44, 44], iconAnchor: [22, 22] }) 
+            }).addTo(map);
+
+            marker.on('click', function() { openSpotCard(spot); });
+        });
+
+        // 定位核心功能
+        function locateUser(shouldFocusMap = false) {
+            if (!navigator.geolocation) {
+                if(shouldFocusMap) alert("您的浏览器不支持地理定位功能");
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    var lat = position.coords.latitude;
+                    var lng = position.coords.longitude;
+                    currentUserLocation = [lat, lng];
+
+                    // 绘制/更新用户高亮光圈
+                    if (userLocationMarker) {
+                        userLocationMarker.setLatLng([lat, lng]);
+                    } else {
+                        var userIcon = L.divIcon({
+                            html: '<div class="user-location-marker"></div>',
+                            className: '',
+                            iconSize: [20, 20],
+                            iconAnchor: [10, 10]
+                        });
+                        userLocationMarker = L.marker([lat, lng], { icon: userIcon, zIndexOffset: 1000 }).addTo(map);
+                    }
+
+                    if (shouldFocusMap) {
+                        playChime();
+                        map.setView([lat, lng], 18);
+                    }
+
+                    if (currentSelectedSpot) {
+                        updateSpotDistanceText(currentSelectedSpot.lat, currentSelectedSpot.lng);
+                    }
+                },
+                function(error) {
+                    if (shouldFocusMap) {
+                        alert("获取位置失败，请检查 GPS 或浏览器定位权限。");
+                    }
+                },
+                { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+            );
+        }
+
+        // 首次弹窗处理
+        window.onload = function() {
+            setTimeout(function() {
+                document.getElementById('location-ask-modal').style.display = 'flex';
+            }, 600);
+        };
+
+        function acceptLocationPrompt() {
+            playChime();
+            document.getElementById('location-ask-modal').style.display = 'none';
+            locateUser(true);
+        }
+
+        function declineLocationPrompt() {
+            playChime();
+            document.getElementById('location-ask-modal').style.display = 'none';
+        }
+
+        // 搜索功能
+        function handleSearch() {
+            var query = document.getElementById('search-input').value.trim().toLowerCase();
+            var resultsBox = document.getElementById('search-results');
+            
+            if (!query) { resultsBox.style.display = 'none'; return; }
+
+            var matches = spots.filter(s => s.name.toLowerCase().includes(query) || s.desc.toLowerCase().includes(query));
+            if (matches.length > 0) {
+                resultsBox.innerHTML = '';
+                matches.forEach(s => {
+                    var div = document.createElement('div');
+                    div.className = 'search-item';
+                    div.innerHTML = `<span>📍 ${s.name}</span><span style="font-size:10px; color:#aaa;">查看详情</span>`;
+                    div.onclick = function() {
+                        jumpToSpot(s);
+                        resultsBox.style.display = 'none';
+                        document.getElementById('search-input').value = s.name;
+                    };
+                    resultsBox.appendChild(div);
+                });
+                resultsBox.style.display = 'block';
+            } else {
+                resultsBox.innerHTML = '<div style="padding: 10px; font-size: 12px; color: #999; text-align: center;">未找到相关景点</div>';
+                resultsBox.style.display = 'block';
+            }
+        }
+
+        function openSpotCard(spot) {
+            playChime();
+            currentSelectedSpot = spot;
+            document.getElementById('spot-img').src = spot.image;
+            document.getElementById('spot-title').innerText = spot.name;
+            document.getElementById('spot-desc').innerText = spot.desc;
+            
+            updateSpotDistanceText(spot.lat, spot.lng);
+            
+            var stampBtn = document.getElementById('stamp-btn-action');
+            if (stampedSpots.has(spot.id)) {
+                stampBtn.innerText = "✔️ 已打卡成功";
+                stampBtn.style.background = "#81c784";
+            } else {
+                stampBtn.innerText = "🚩 现场盖章打卡";
+                stampBtn.style.background = "#4caf50";
+            }
+
+            document.getElementById('spot-info').classList.add('active');
+            document.getElementById('stamp-dropdown').classList.remove('active');
+        }
+
+        function jumpToSpot(spot) {
+            playChime();
+            map.setView([spot.lat, spot.lng], 18);
+            openSpotCard(spot);
+        }
+
+        // 计算物理距离 (千米)
+        function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+            var R = 6371; 
+            var dLat = deg2rad(lat2-lat1);
+            var dLon = deg2rad(lon2-lon1); 
+            var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
+            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+            return R * c;
+        }
+
+        function deg2rad(deg) { return deg * (Math.PI/180); }
+
+        function updateSpotDistanceText(lat, lng) {
+            var distTag = document.getElementById('spot-distance');
+            if (currentUserLocation) {
+                var distanceKm = getDistanceFromLatLonInKm(currentUserLocation[0], currentUserLocation[1], lat, lng);
+                var walkMins = Math.max(1, Math.round(distanceKm * 1000 / 80));
+                distTag.innerText = `🚶 距您当前位置约 ${(distanceKm < 1 ? Math.round(distanceKm*1000)+'米' : distanceKm.toFixed(1)+'公里')} | 步行约 ${walkMins} 分钟`;
+            } else {
+                distTag.innerText = "🚶 步行街核心区域内 (开启定位计算精准路径)";
+            }
+        }
+
+        // 跳转高德 Web 真实步行导航
+        function navigateToSelectedSpot() {
+            if (!currentSelectedSpot) return;
+            playChime();
+
+            // 直线绘制辅助
+            clearRoute();
+            var startPt = currentUserLocation ? currentUserLocation : [23.1155, 113.2435];
+            var endPt = [currentSelectedSpot.lat, currentSelectedSpot.lng];
+
+            activeNavigationRoute = L.polyline([startPt, endPt], {
+                color: '#ff9800', weight: 7, opacity: 0.9, dashArray: '8, 12'
+            }).addTo(map);
+
+            map.fitBounds(activeNavigationRoute.getBounds(), { padding: [80, 80] });
+
+            // 拉起第三方真实步行导航
+            var uri = `https://uri.amap.com/navigation?to=${currentSelectedSpot.lng},${currentSelectedSpot.lat},${encodeURIComponent(currentSelectedSpot.name)}&mode=walk&policy=1&src=mypage&coordinate=gaode&callnative=0`;
+            window.open(uri, '_blank');
+        }
+
+        // 带地理位置校验的打卡逻辑 (限定距离 <= 100m)
+        function triggerManualStamp() {
+            if (!currentSelectedSpot) return;
+
+            if (currentUserLocation) {
+                var distKm = getDistanceFromLatLonInKm(currentUserLocation[0], currentUserLocation[1], currentSelectedSpot.lat, currentSelectedSpot.lng);
+                var distMeters = distKm * 1000;
+
+                // 允许 100 米内打卡（包含 GPS 偏移余量）
+                if (distMeters <= 100) {
+                    markSpotStamped(currentSelectedSpot.id);
+                    alert(`🎉 恭喜！您已成功到达【${currentSelectedSpot.name}】并完成盖章打卡！`);
+                } else {
+                    alert(`📍 您距离【${currentSelectedSpot.name}】还有约 ${Math.round(distMeters)} 米，请靠近景点后再试哦！`);
+                }
+            } else {
+                // 如果用户未开启定位，提示开启或直接进行体验盖章
+                var confirmStamp = confirm(`未开启实时定位，是否直接进行体验盖章？`);
+                if(confirmStamp) {
+                    markSpotStamped(currentSelectedSpot.id);
+                }
+            }
+        }
+
+        function markSpotStamped(spotId) {
+            if (!stampedSpots.has(spotId)) {
+                stampedSpots.add(spotId);
+                document.getElementById('stamp-count').innerText = stampedSpots.size;
+                
+                var el = document.getElementById('marker-' + spotId);
+                if(el) el.classList.add('stamped');
+
+                var dropItem = document.getElementById('dropdown-item-' + spotId);
+                if(dropItem) {
+                    dropItem.className = 'stamp-item visited';
+                    var targetSpot = spots.find(s => s.id === spotId);
+                    dropItem.innerHTML = `<span>✨ ${targetSpot.name}</span><span style="font-size:10px;">已去过 ✔️</span>`;
+                }
+
+                if (currentSelectedSpot && currentSelectedSpot.id === spotId) {
+                    var stampBtn = document.getElementById('stamp-btn-action');
+                    stampBtn.innerText = "✔️ 已打卡成功";
+                    stampBtn.style.background = "#81c784";
+                }
+
+                if (stampedSpots.size === spots.length) {
+                    setTimeout(function() {
+                        document.getElementById('achievement-modal').style.display = 'flex';
+                    }, 500);
+                }
+            }
+        }
+
+        // 状态面板控制
+        function toggleDropdown(e) {
+            e.stopPropagation();
+            playChime();
+            var dropdown = document.getElementById('stamp-dropdown');
+            dropdown.classList.toggle('active');
+        }
+
+        window.onclick = function(e) {
+            if (!e.target.closest('.stamp-container')) {
+                document.getElementById('stamp-dropdown').classList.remove('active');
+            }
+            if (!e.target.closest('.search-box-container')) {
+                document.getElementById('search-results').style.display = 'none';
+            }
+        };
+
+        function closeCard() {
+            playChime();
+            document.getElementById('spot-info').classList.remove('active');
+        }
+
+        function closeModal() {
+            document.getElementById('achievement-modal').style.display = 'none';
+        }
+
+        function resetNorth() {
+            playChime();
+            map.setView([23.1155, 113.2435], 17);
+        }
+
+        // 规划预设游览路线
+        var currentRoute = null;
+        var routes = {
+            food: [[23.1152, 113.2428], [23.1145, 113.2430], [23.1158, 113.2435]],
+            history: [[23.1132, 113.2450], [23.1140, 113.2435], [23.1175, 113.2415]],
+            folk: [[23.1150, 113.2420], [23.1155, 113.2435], [23.1165, 113.2460]],
+            shopping: [[23.1160, 113.2440], [23.1168, 113.2448], [23.1158, 113.2435]]
+        };
+
+        function drawRoute(type) {
+            playChime();
+            clearRoute();
+            var colors = { food: '#ffa726', history: '#42a5f5', folk: '#ec407a', shopping: '#ab47bc' };
+
+            currentRoute = L.polyline(routes[type], {
+                color: colors[type], weight: 6, opacity: 0.85, dashArray: '10, 10'
+            }).addTo(map);
+
+            map.fitBounds(currentRoute.getBounds(), { padding: [60, 60] });
+        }
+
+        function clearRoute() {
+            if (currentRoute) { map.removeLayer(currentRoute); currentRoute = null; }
+            if (activeNavigationRoute) { map.removeLayer(activeNavigationRoute); activeNavigationRoute = null; }
+        }
+    </script>
+</body>
+</html>
