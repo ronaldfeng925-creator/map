@@ -75,7 +75,7 @@
             color: #d84315; border-bottom: 2px solid #ffe0b2; display: flex;
             justify-content: space-between; align-items: center;
         }
-        .dropdown-list { overflow-y: auto; padding: 8px; max-height: calc(60vh - 85px); }
+        .dropdown-list { overflow-y: auto; padding: 8px; max-height: calc(60vh - 110px); }
         .stamp-item {
             display: flex; align-items: center; justify-content: space-between;
             padding: 8px 10px; border-radius: 10px; margin-bottom: 4px;
@@ -160,8 +160,27 @@
             width: 38px; height: 38px; border-radius: 50%; text-align: center;
             line-height: 38px; font-size: 18px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
             border: 3px solid white; animation: bounce 2s infinite ease-in-out;
+            margin: 0 auto;
         }
         .q-marker.stamped { filter: drop-shadow(0 0 8px #ffeb3b); border-color: #ffd54f; }
+
+        /* 图标正下方显示的景点名称标签 */
+        .marker-label {
+            position: absolute;
+            top: 42px;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            background: rgba(255, 255, 255, 0.92);
+            color: #5d4037;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 8px;
+            border: 1px solid #ffe0b2;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+            pointer-events: none;
+        }
 
         /* 底部Q版卡片样式 */
         .info-card {
@@ -172,23 +191,24 @@
             box-shadow: 0 -8px 25px rgba(0,0,0,0.15);
             transition: bottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             z-index: 1100; max-height: 60vh; overflow-y: auto;
-            border-top: 5px solid #ffb74d;
+            border-top: 5px solid #ffb74d; display: none;
         }
-        .info-card.active { bottom: 0; }
+        .info-card.active { bottom: 0; display: block; }
+        
         .spot-img {
             width: 100%;
-            aspect-ratio: 16 / 9; /* 强制固定 16:9 比例 */
+            aspect-ratio: 16 / 9;
             object-fit: cover;
             border-radius: 14px;
             margin-bottom: 10px;
             background: #fff8ef;
             border: 2px solid #ffe0b2;
-            box-sizing: border-box;cursor: pointer; /* 鼠标悬停显示手型 */
+            box-sizing: border-box; cursor: pointer;
             transition: transform 0.2s;
+            user-select: none;
         }
-        .spot-img:active {
-            transform: scale(0.98); /* 点击时的微按压效果 */
-        }
+        .spot-img:active { transform: scale(0.98); }
+
         .info-card h2 {
             margin: 0 0 6px 0; font-size: 18px; color: #d84315; font-weight: 800;
             display: flex; justify-content: space-between; align-items: center;
@@ -199,14 +219,30 @@
         }
         .info-card p { margin: 0 0 16px 0; color: #6d4c41; font-size: 12px; line-height: 1.6; }
        
-        /* 语音讲解按钮 */
+        /* 语音讲解与音频进度控制 */
+        .audio-wrapper {
+            display: flex; align-items: center; gap: 8px; width: 100%; margin-bottom: 8px;
+        }
         .tts-btn {
             background: #fff3e0; color: #e65100; border: 1.5px solid #ffb74d;
             padding: 4px 10px; border-radius: 15px; font-size: 11px; font-weight: bold;
-            cursor: pointer; display: flex; align-items: center; gap: 4px;
+            cursor: pointer; display: flex; align-items: center; gap: 4px; white-space: nowrap;
         }
         .tts-btn.playing { background: #ffe0b2; color: #d84315; animation: pulse-btn 1.2s infinite; }
         @keyframes pulse-btn { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+        .audio-progress-container {
+            flex: 1; display: none; align-items: center; gap: 6px; background: #fff8ef; padding: 4px 8px; border-radius: 12px; border: 1px solid #ffe0b2;
+        }
+        .audio-progress-bg {
+            flex: 1; height: 6px; background: #ffe0b2; border-radius: 3px; overflow: hidden; position: relative;
+        }
+        .audio-progress-bar {
+            width: 0%; height: 100%; background: #ff7043; transition: width 0.1s linear;
+        }
+        .audio-time-text {
+            font-size: 10px; color: #8d6e63; font-family: monospace; white-space: nowrap;
+        }
 
         .btn-group { display: flex; gap: 8px; margin-bottom: 8px; }
         .nav-btn {
@@ -220,6 +256,12 @@
             padding: 10px 12px; border-radius: 12px; flex: 1;
             font-size: 13px; cursor: pointer; font-weight: bold;
             box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+        .ar-btn {
+            background: #ab47bc; color: white; border: none;
+            padding: 10px 12px; border-radius: 12px; flex: 1;
+            font-size: 13px; cursor: pointer; font-weight: bold;
+            box-shadow: 0 4px 12px rgba(171, 71, 188, 0.3);
         }
 
         /* 弹窗通用样式 */
@@ -263,6 +305,51 @@
             line-height: 24px; border: 2px solid white;
             box-shadow: 0 2px 8px rgba(0,0,0,0.3); white-space: nowrap; padding: 0 6px;
         }
+    
+        /* 多图片轮播 */
+        .gallery-container {
+            position: relative;
+            width: 100%;
+            touch-action: pan-y;
+        }
+        .gallery-container .spot-img { display: block; }
+        .gallery-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(0,0,0,0.45);
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+        .gallery-prev { left: 10px; }
+        .gallery-next { right: 10px; }
+        .image-dots {
+            text-align: center;
+            margin-top: -5px;
+            margin-bottom: 8px;
+            min-height: 12px;
+        }
+        .image-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ddd;
+            margin: 0 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .image-dot.active { background: #ff7043; }
     </style>
 </head>
 <body>
@@ -277,7 +364,7 @@
 
         <div class="stamp-container">
             <div id="stamp-btn" onclick="toggleDropdown(event)">
-                <span>🏆 <span id="stamp-count">0</span>/<span id="stamp-total">20</span></span> 🔽
+                <span>🏆 <span id="stamp-count">0</span>/<span id="stamp-total">0</span></span> 🔽
             </div>
             <div id="stamp-dropdown">
                 <div class="dropdown-header">
@@ -285,10 +372,15 @@
                     <span style="font-size: 10px; color: #888;">点击直达</span>
                 </div>
                 <div id="dropdown-list" class="dropdown-list"></div>
-                <!-- 生成海报入口 -->
                 <button class="poster-btn-entry" onclick="generatePoster()">
                     <span>📸 生成西关打卡纪念海报</span>
                 </button>
+                <!-- 功能实现：重置打卡进度按钮 -->
+                <div style="text-align: center; padding: 6px; background: #fff8ef; border-top: 1px dashed #ffe0b2;">
+                    <span onclick="resetAllProgress()" style="font-size: 10px; color: #b0bec5; cursor: pointer; text-decoration: underline;">
+                        🗑️ 重置所有打卡进度
+                    </span>
+                </div>
             </div>
         </div>
     </div>
@@ -302,7 +394,6 @@
         <button onclick="clearRoute()" style="background:#e0e0e0; color:#555;">清除路线</button>
     </div>
 
-    <!-- 路线节点信息提示条 -->
     <div id="route-info-toast"></div>
 
     <!-- 左上角Q版图例说明 -->
@@ -314,7 +405,7 @@
         <div class="legend-item"><span class="legend-icon" style="background:#ab47bc;">📜</span>人文旧址</div>
     </div>
 
-    <!-- 右下角悬浮按钮（定位按钮 + 指南针） -->
+    <!-- 右下角悬浮按钮 -->
     <div class="controls-right-bottom">
         <div class="btn-floating" onclick="locateUser(true)" title="定位我的位置">🎯</div>
         <div class="btn-floating" onclick="resetNorth()" title="复位中心">🧭</div>
@@ -325,20 +416,52 @@
 
     <!-- 底部Q版详情卡片 -->
     <div id="spot-info" class="info-card">
-        <img id="spot-img" class="spot-img" src="" alt="景点图片">
+        <div class="gallery-container" id="gallery-container">
+            <!-- 功能实现：图片懒加载 loading="lazy" -->
+            <img id="spot-img" class="spot-img" src="" alt="景点图片" loading="lazy">
+            <button id="gallery-prev" class="gallery-arrow gallery-prev" onclick="changeImage(-1)">‹</button>
+            <button id="gallery-next" class="gallery-arrow gallery-next" onclick="changeImage(1)">›</button>
+            <div id="image-dots" class="image-dots"></div>
+        </div>
         <h2>
             <span id="spot-title">地点名称</span>
+        </h2>
+        
+        <!-- 功能实现：语音讲解 + 进度条/倒计时条 -->
+        <div class="audio-wrapper">
             <button id="tts-btn" class="tts-btn" onclick="toggleSpeech()">
                 <span id="tts-icon">📢</span> <span id="tts-text">语音讲解</span>
             </button>
-        </h2>
+            <div id="audio-progress-container" class="audio-progress-container">
+                <div class="audio-progress-bg">
+                    <div id="audio-progress-bar" class="audio-progress-bar"></div>
+                </div>
+                <span id="audio-time-text" class="audio-time-text">00:00 / 00:00</span>
+            </div>
+        </div>
+
         <div id="spot-distance" class="distance-tag">🚶 正在计算距离...</div>
         <p id="spot-desc">详细介绍</p>
+
         <div class="btn-group">
-            <button class="nav-btn" onclick="navigateToSelectedSpot()">🗺️ 开启实景导航</button>
-            <button id="stamp-btn-action" class="stamp-action-btn" onclick="triggerManualStamp()">🚩 现场盖章打卡</button>
+            <button class="nav-btn" onclick="navigateToSelectedSpot()">🗺️ 实景导航</button>
+            <button id="ar-btn-action" class="ar-btn" onclick="startARPhoto()">📸 AR合影</button>
+            <button id="stamp-btn-action" class="stamp-action-btn" onclick="triggerManualStamp()">🚩 盖章打卡</button>
         </div>
         <button style="background: #e0e0e0; color: #666; border: none; padding: 8px; border-radius: 10px; width: 100%; font-size: 12px; cursor: pointer;" onclick="closeCard()">关闭介绍</button>
+    </div>
+
+    <!-- 隐藏的摄像头相机调起 Input -->
+    <input type="file" id="ar-camera-input" accept="image/*" capture="environment" style="display:none;" onchange="handleARPhoto(event)">
+
+    <!-- 功能实现：伪 AR 拍立得拍照预览弹窗 -->
+    <div id="ar-modal" class="modal-overlay">
+        <div class="modal-card" style="max-width: 320px; padding: 15px;">
+            <h4 style="margin: 0 0 10px 0; color: #d84315;">📷 西关打卡拍立得</h4>
+            <canvas id="ar-canvas" width="600" height="800" style="width: 100%; border-radius: 8px; border: 2px solid #ffe0b2; box-sizing: border-box;"></canvas>
+            <p style="font-size: 11px; color: #8d6e63; margin: 8px 0 12px 0;">长按上方图片保存专属打卡纪念照片</p>
+            <button onclick="document.getElementById('ar-modal').style.display='none'" style="background: #e0e0e0; border: none; padding: 8px 20px; border-radius: 12px; font-size: 12px; color:#555; cursor: pointer;">关闭</button>
+        </div>
     </div>
 
     <!-- 首次打开询问定位弹窗 -->
@@ -376,7 +499,7 @@
                 
                 <div class="poster-progress-box">
                     <div style="font-size: 13px; font-weight: bold; color: #d84315;">打卡成就进度</div>
-                    <div style="font-size: 24px; font-weight: 800; color: #2e7d32; margin: 4px 0;" id="poster-score">0 / 20</div>
+                    <div style="font-size: 24px; font-weight: 800; color: #2e7d32; margin: 4px 0;" id="poster-score">0 / 0</div>
                     <div style="font-size: 10px; color: #8d6e63;" id="poster-badge">称号：西关初探者</div>
                 </div>
 
@@ -392,6 +515,14 @@
             <button onclick="downloadPosterImage()" style="margin-top: 15px; background: #ff7043; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; font-size: 13px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
                 💾 保存海报图片到手机
             </button>
+        </div>
+    </div>
+
+    <!-- 大图预览弹窗 -->
+    <div id="image-modal" class="modal-overlay" onclick="closeImageModal()" style="display: none; position: fixed; top:0; left:0; width:100vw; height:100vh; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center;">
+        <div style="position: relative; max-width: 90vw; max-height: 80vh;">
+            <img id="modal-img-content" src="" style="max-width: 100%; max-height: 80vh; border-radius: 16px; border: 3px solid #ffb74d; box-shadow: 0 10px 30px rgba(0,0,0,0.5); object-fit: contain;">
+            <div style="color: white; margin-top: 10px; font-size: 12px; text-align: center;">点击任意空白处关闭</div>
         </div>
     </div>
 
@@ -412,7 +543,6 @@
             maxZoom: 20
         }).addTo(map);
 
-        // 初始化 MarkerCluster 聚合图层
         var markerClusterGroup = L.markerClusterGroup({
             disableClusteringAtZoom: 16,
             spiderfyOnMaxZoom: true,
@@ -420,7 +550,6 @@
         });
         map.addLayer(markerClusterGroup);
 
-        // 音效反馈
         function playChime() {
             try {
                 var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -438,35 +567,39 @@
             } catch(e) {}
         }
 
-        // 3. 20 个完整景点数据
+        // 景点数据（新增 audio 字段支持动态加载配音文件，如 ./1.mp3）
         var spots = [
-            { id: 1, name: "千米岭南骑楼群", type: "landmark", lat: 23.1155, lng: 113.2435, desc: "广州规模最大、保存最完整的民国骑楼，满洲窗、罗马柱、灰塑雕花，全天免费打卡。", image: "./1.jpg" },
-            { id: 2, name: "陶陶居（第十甫总店）", type: "landmark", lat: 23.1158, lng: 113.2435, desc: "1880年百年茶楼,康有为题字招牌,西关粤曲私伙局聚集地。", image: "./2.jpg" },
-            { id: 3, name: "莲香楼", type: "landmark", lat: 23.1160, lng: 113.2440, desc: "“莲蓉第一家”，广式月饼发源地，百年糕点老字号地标建筑。", image: "./3.jpg" },
-            { id: 4, name: "平安大戏院", type: "landmark", lat: 23.1165, lng: 113.2460, desc: "1951年老粤剧戏院,复古门头，西关老牌文娱地标。", image: "./4.jpg" },
-            { id: 5, name: "西关民俗青铜雕塑群", type: "landmark", lat: 23.1150, lng: 113.2420, desc: "沿街20余组铜像:鸡公榄小贩、凉茶档、西关小姐、剃头匠,还原老广州市井生活。", image: "./5.jpg" },
-            { id: 6, name: "华林禅寺（西来初地）", type: "history", lat: 23.1132, lng: 113.2450, desc: "1400年岭南古刹,达摩祖师登陆广州之地，内有五百罗汉堂、舍利塔与五眼井。", image: "./6.jpg" },
-            { id: 7, name: "经纶会馆", type: "history", lat: 23.1175, lng: 113.2415, desc: "省级文保单位，清代广州丝绸行业会馆，广府商贸历史展馆，免费参观。", image: "./7.jpg" },
-            { id: 8, name: "南信牛奶甜品专家", type: "food", lat: 23.1152, lng: 113.2428, desc: "上下九排队王，双皮奶和姜撞奶香甜浓郁，西关甜品天花板。", image: "./8.jpg" },
-            { id: 9, name: "陈添记鱼皮", type: "food", lat: 23.1145, lng: 113.2430, desc: "藏在巷子里的神级小吃，祖传爽鱼皮配上艇仔粥，老广的最爱。", image: "./9.jpg" },
-            { id: 10, name: "皇上皇腊味总店", type: "food", lat: 23.1168, lng: 113.2448, desc: "广式腊味老字号，每逢秋冬腊香四溢，广府伴手礼首选。", image: "./10.jpg" },
-            { id: 11, name: "李小龙祖居", type: "history", lat: 23.1180, lng: 113.2430, desc: "位于培正巷，典型西关大屋结构，展示功夫巨星李小龙及其父亲李海泉的生平事迹。", image: "./11.jpg" },
-            { id: 12, name: "源记肠粉", type: "food", lat: 23.1185, lng: 113.2422, desc: "华贵路老字号布拉肠粉，皮薄馅靓，特制豉油浓郁鲜香，街坊邻里最爱。", image: "./12.jpg" },
-            { id: 13, name: "宝华面店", type: "food", lat: 23.1162, lng: 113.2418, desc: "老字号竹升面，鲜虾云吞个大馅饱满，大地鱼高汤鲜美无比。", image: "./13.jpg" },
-            { id: 14, name: "顺记冰室", type: "food", lat: 23.1156, lng: 113.2422, desc: "广州传统四大冰室之一，招牌椰子雪糕、芒果雪糕采用纯水果手工制作，果香浓郁。", image: "./14.jpg" },
-            { id: 15, name: "银记肠粉店（上九路店）", type: "food", lat: 23.1163, lng:113.2465, desc: "以“白如玉、薄如纸、爽滑可口”著称，老广州拉肠地标名店。", image: "./15.jpg" },
-            { id: 16, name: "广州酒家（文昌总店）", type: "food", lat:23.1170, lng:113.2410, desc: "“食在广州第一家”，园林式酒家，感受传统粤菜与正宗早茶文化。", image: "./16.jpg" },
-            { id: 17, name: "华林玉器街", type: "landmark", lat: 23.1138, lng: 113.2458, desc: "全国著名的翡翠玉石集散地，包含华林玉器大楼与商圈，商贸氛围浓厚。", image: "./17.jpg" },
-            { id: 18, name: "清平中药材市场", type: "landmark", lat: 23.1125, lng: 113.2430, desc: "广州历史悠久的中药材专业市场，满街参茸滋补品，富有地道广府滋补文化。", image: "./18.jpg" }
+            { id: 1, name: "千米岭南骑楼群", type: "landmark", lat: 23.1155, lng: 113.2435, desc: "广州规模最大、保存最完整的民国骑楼，满洲窗、罗马柱、灰塑雕花，全天免费打卡。", images: ["./1.jpg"], audio: "./1.mp3" },
+            { id: 2, name: "陶陶居（第十甫总店）", type: "landmark", lat: 23.1158, lng: 113.2435, desc: "1880年百年茶楼,康有为题字招牌,西关粤曲私伙局聚集地。", images: ["./2.jpg", "./2.2.jpg"], audio: "./2.mp3" },
+            { id: 3, name: "莲香楼", type: "landmark", lat: 23.1160, lng: 113.2440, desc: "“莲蓉第一家”，广式月饼发源地，百年糕点老字号地标建筑。", images: ["./3.jpg"], audio: "./3.mp3" },
+            { id: 4, name: "平安大戏院", type: "landmark", lat: 23.1165, lng: 113.2460, desc: "1951年老粤剧戏院,复古门头，西关老牌文娱地标。", images: ["./4.jpg","./4.2.jpg"], audio: "./4.mp3" },
+            { id: 5, name: "西关民俗青铜雕塑群", type: "landmark", lat: 23.1150, lng: 113.2420, desc: "沿街20余组铜像:鸡公榄小贩、凉茶档、西关小姐、剃头匠,还原老广州市井生活。", images: ["./5.jpg"], audio: "./5.mp3" },
+            { id: 6, name: "华林禅寺（西来初地）", type: "history", lat: 23.1132, lng: 113.2450, desc: "1400年岭南古刹,达摩祖师登陆广州之地，内有五百罗汉堂、舍利塔与五眼井。", images: ["./6.jpg","./6.2.jpg"], audio: "./6.mp3" },
+            { id: 7, name: "经纶会馆", type: "history", lat: 23.1175, lng: 113.2415, desc: "省级文保单位，清代广州丝绸行业会馆，广府商贸历史展馆，免费参观。", images: ["./7.jpg"], audio: "./7.mp3" },
+            { id: 8, name: "南信牛奶甜品专家", type: "food", lat: 23.1152, lng: 113.2428, desc: "上下九排队王，双皮奶和姜撞奶香甜浓郁，西关甜品天花板。", images: ["./8.jpg"], audio: "./8.mp3" },
+            { id: 9, name: "陈添记鱼皮", type: "food", lat: 23.1145, lng: 113.2430, desc: "藏在巷子里的神级小吃，祖传爽鱼皮配上艇仔粥，老广的最爱。", images: ["./9.jpg","./9.2.jpg"], audio: "./9.mp3" },
+            { id: 10, name: "皇上皇腊味总店", type: "food", lat: 23.1168, lng: 113.2448, desc: "广式腊味老字号，每逢秋冬腊香四溢，广府伴手礼首选。", images: ["./10.jpg"], audio: "./10.mp3" },
+            { id: 11, name: "李小龙祖居", type: "history", lat: 23.1180, lng: 113.2430, desc: "位于培正巷，典型西关大屋结构，展示功夫巨星李小龙及其父亲李海泉的生平事迹。", images: ["./11.jpg"], audio: "./11.mp3" },
+            { id: 12, name: "源记肠粉", type: "food", lat: 23.1185, lng: 113.2422, desc: "华贵路老字号布拉肠粉，皮薄馅靓，特制豉油浓郁鲜香，街坊邻里最爱。", images: ["./12.jpg"], audio: "./12.mp3" },
+            { id: 13, name: "宝华面店", type: "food", lat: 23.1162, lng: 113.2418, desc: "老字号竹升面，鲜虾云吞个大馅饱满，大地鱼高汤鲜美无比。", images: ["./13.jpg"], audio: "./13.mp3" },
+            { id: 14, name: "顺记冰室", type: "food", lat: 23.1156, lng: 113.2422, desc: "广州传统四大冰室之一，招牌椰子雪糕、芒果雪糕采用纯水果手工制作，果香浓郁。", images: ["./14.jpg"], audio: "./14.mp3" },
+            { id: 15, name: "银记肠粉店（上九路店）", type: "food", lat: 23.1163, lng:113.2465, desc: "以“白如玉、薄如纸、爽滑可口”著称，老广州拉肠地标名店。", images: ["./15.jpg","./15.2.jpg"], audio: "./15.mp3" },
+            { id: 16, name: "广州酒家（文昌总店）", type: "food", lat:23.1170, lng:113.2410, desc: "“食在广州第一家”，园林式酒家，感受传统粤菜与正宗早茶文化。", images: ["./16.jpg", "./16.2.jpg"], audio: "./16.mp3" },
+            { id: 17, name: "华林玉器街", type: "landmark", lat: 23.1138, lng: 113.2458, desc: "全国著名的翡翠玉石集散地，包含华林玉器大楼与商圈，商贸氛围浓厚。", images: ["./17.jpg"], audio: "./17.mp3" },
+            { id: 18, name: "清平中药材市场", type: "landmark", lat: 23.1125, lng: 113.2430, desc: "广州历史悠久的中药材专业市场，满街参茸滋补品，富有地道广府滋补文化。", images: ["./18.jpg", "./18.2.jpg"], audio: "./18.mp3" }
         ];
 
-        // 地铁站/交通出入口数据
+        spots.forEach(function(spot) {
+            if (!spot.images || !Array.isArray(spot.images) || spot.images.length === 0) {
+                spot.images = [spot.image || './1.jpg'];
+            }
+        });
+
         var subwayExits = [
             { name: "🚇 1号线 长寿路站 B口", lat: 23.1178, lng: 113.2412 },
             { name: "🚇 8号线 华林寺站 C口", lat: 23.1128, lng: 113.2442 }
         ];
 
-        // 加载 LocalStorage 打卡记录
         var savedStamps = [];
         try {
             savedStamps = JSON.parse(localStorage.getItem('stampedSpots')) || [];
@@ -478,6 +611,9 @@
         var currentUserLocation = null;
         var userLocationMarker = null;
         var isSpeaking = false;
+        var currentImages = [];
+        var currentImageIndex = 0;
+        var currentAudio = null; // 全局动态音频对象
 
         // 渲染地铁站点
         subwayExits.forEach(function(exit) {
@@ -490,7 +626,7 @@
             L.marker([exit.lat, exit.lng], { icon: subIcon, zIndexOffset: 500 }).addTo(map);
         });
 
-        // 初始化集章下拉列表
+        // 初始化打卡清单
         function initDropdownList() {
             document.getElementById('stamp-total').innerText = spots.length;
             var listContainer = document.getElementById('dropdown-list');
@@ -510,16 +646,26 @@
         }
         initDropdownList();
 
-        // 渲染地图景点标记
+        // 渲染地图 Marker
         spots.forEach(function(spot) {
             var emoji = spot.type === 'landmark' ? '🏰' : spot.type === 'history' ? '🏛️' : spot.type === 'food' ? '🍡' : '📜';
             var bgColor = spot.type === 'landmark' ? '#ec407a' : spot.type === 'history' ? '#42a5f5' : spot.type === 'food' ? '#ffa726' : '#ab47bc';
 
             var stampedClass = stampedSpots.has(spot.id) ? 'stamped' : '';
-            var iconHtml = `<div id="marker-${spot.id}" class="q-marker ${stampedClass}" style="background-color: ${bgColor}; color: white;">${emoji}</div>`;
+            var iconHtml = `
+                <div id="marker-${spot.id}" class="q-marker ${stampedClass}" style="background-color: ${bgColor}; color: white;">
+                    ${emoji}
+                </div>
+                <div class="marker-label">${spot.name}</div>
+            `;
 
             var marker = L.marker([spot.lat, spot.lng], {
-                icon: L.divIcon({ html: iconHtml, className: '', iconSize: [44, 44], iconAnchor: [22, 22] })
+                icon: L.divIcon({ 
+                    html: iconHtml, 
+                    className: '', 
+                    iconSize: [80, 65], 
+                    iconAnchor: [40, 19] 
+                })
             });
 
             marker.on('click', function(e) { 
@@ -529,15 +675,89 @@
             markerClusterGroup.addLayer(marker);
         });
 
-        // 语音讲解功能 (SpeechSynthesis)
+        // 功能实现：重置打卡进度逻辑
+        function resetAllProgress() {
+            if (confirm("⚠️ 确定要清空所有已打卡印章吗？重置后无法撤销哦！")) {
+                localStorage.removeItem('stampedSpots');
+                stampedSpots.clear();
+
+                initDropdownList();
+
+                spots.forEach(function(s) {
+                    var el = document.getElementById('marker-' + s.id);
+                    if (el) el.classList.remove('stamped');
+                });
+
+                if (currentSelectedSpot) {
+                    var stampBtn = document.getElementById('stamp-btn-action');
+                    if (stampBtn) {
+                        stampBtn.innerText = "🚩 盖章打卡";
+                        stampBtn.style.background = "#4caf50";
+                    }
+                }
+
+                alert("打卡进度已全部重置！");
+            }
+        }
+
+        // 功能实现：按需动态加载音频，配合进度条/倒计时更新
         function toggleSpeech() {
             if (!currentSelectedSpot) return;
 
-            if ('speechSynthesis' in window) {
-                if (isSpeaking) {
-                    window.speechSynthesis.cancel();
+            var progressContainer = document.getElementById('audio-progress-container');
+            var progressBar = document.getElementById('audio-progress-bar');
+            var timeText = document.getElementById('audio-time-text');
+
+            // 如果正在播放，停止
+            if (isSpeaking) {
+                if (currentAudio) {
+                    currentAudio.pause();
+                    currentAudio = null;
+                }
+                if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+                
+                updateSpeechUI(false);
+                progressContainer.style.display = 'none';
+                return;
+            }
+
+            // 1. 优先使用按需动态加载真实音频 (spot.audio)
+            if (currentSelectedSpot.audio) {
+                currentAudio = new Audio(currentSelectedSpot.audio); // 只有点击时才实例化去请求 MP3
+                progressContainer.style.display = 'flex';
+
+                currentAudio.play().then(function() {
+                    updateSpeechUI(true);
+                }).catch(function() {
+                    // 如果音频文件不存在或加载失败，退回到系统 TTS 语音合成
+                    fallbackToTTS();
+                });
+
+                // 监听进度事件 update
+                currentAudio.ontimeupdate = function() {
+                    if (!currentAudio || !currentAudio.duration) return;
+                    var percent = (currentAudio.currentTime / currentAudio.duration) * 100;
+                    progressBar.style.width = percent + '%';
+
+                    var currentMin = Math.floor(currentAudio.currentTime / 60).toString().padStart(2, '0');
+                    var currentSec = Math.floor(currentAudio.currentTime % 60).toString().padStart(2, '0');
+                    var totalMin = Math.floor(currentAudio.duration / 60).toString().padStart(2, '0');
+                    var totalSec = Math.floor(currentAudio.duration % 60).toString().padStart(2, '0');
+
+                    timeText.innerText = `${currentMin}:${currentSec} / ${totalMin}:${totalSec}`;
+                };
+
+                currentAudio.onended = function() {
                     updateSpeechUI(false);
-                } else {
+                    progressContainer.style.display = 'none';
+                    progressBar.style.width = '0%';
+                };
+            } else {
+                fallbackToTTS();
+            }
+
+            function fallbackToTTS() {
+                if ('speechSynthesis' in window) {
                     window.speechSynthesis.cancel();
                     var textToRead = currentSelectedSpot.name + "。" + currentSelectedSpot.desc;
                     var utterance = new SpeechSynthesisUtterance(textToRead);
@@ -549,9 +769,9 @@
 
                     window.speechSynthesis.speak(utterance);
                     updateSpeechUI(true);
+                } else {
+                    alert("您的浏览器暂不支持语音讲解");
                 }
-            } else {
-                alert("您的浏览器暂不支持语音朗读功能");
             }
         }
 
@@ -572,7 +792,56 @@
             }
         }
 
-        // 彩色礼花特效
+        // 功能实现：伪 AR 拍立得拍照合成逻辑
+        function startARPhoto() {
+            document.getElementById('ar-camera-input').click();
+        }
+
+        function handleARPhoto(event) {
+            var file = event.target.files[0];
+            if (!file) return;
+
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var userImg = new Image();
+                userImg.onload = function() {
+                    var canvas = document.getElementById('ar-canvas');
+                    var ctx = canvas.getContext('2d');
+
+                    // 1. 绘制拍立得白色背景底板
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, 600, 800);
+
+                    // 2. 绘制用户拍的照片 (居中绘制)
+                    ctx.drawImage(userImg, 30, 30, 540, 580);
+
+                    // 3. 绘制相框底部留言区域
+                    ctx.fillStyle = '#fff8ef';
+                    ctx.fillRect(30, 620, 540, 150);
+
+                    // 4. 写上景点名称与西关文创印章
+                    ctx.fillStyle = '#d84315';
+                    ctx.font = 'bold 36px sans-serif';
+                    ctx.fillText(currentSelectedSpot ? currentSelectedSpot.name : "西关打卡", 50, 670);
+
+                    ctx.fillStyle = '#8d6e63';
+                    ctx.font = '22px sans-serif';
+                    var today = new Date().toLocaleDateString('zh-CN');
+                    ctx.fillText("📍 上下九步行街 · 独家打卡纪念  " + today, 50, 720);
+
+                    // 5. 显示 AR 弹窗
+                    document.getElementById('ar-modal').style.display = 'flex';
+                    
+                    // 自动触发现场盖章打卡
+                    if (currentSelectedSpot) {
+                        markSpotStamped(currentSelectedSpot.id);
+                    }
+                };
+                userImg.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
         function fireConfetti() {
             if (typeof confetti === 'function') {
                 confetti({ particleCount: 80, spread: 60, origin: { x: 0.2, y: 0.7 } });
@@ -580,7 +849,6 @@
             }
         }
 
-        // 定位功能
         function locateUser(shouldFocusMap = false) {
             if (!navigator.geolocation) {
                 if(shouldFocusMap) alert("您的浏览器不支持地理定位功能");
@@ -640,7 +908,6 @@
             document.getElementById('location-ask-modal').style.display = 'none';
         }
 
-        // 搜索功能
         function handleSearch() {
             var query = document.getElementById('search-input').value.trim().toLowerCase();
             var resultsBox = document.getElementById('search-results');
@@ -669,16 +936,26 @@
         }
 
         function openSpotCard(spot) {
-            if (isSpeaking) { window.speechSynthesis.cancel(); updateSpeechUI(false); }
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            
+            updateSpeechUI(false);
+            document.getElementById('audio-progress-container').style.display = 'none';
+            
             playChime();
             currentSelectedSpot = spot;
 
-            // 设置图片路径并绑定点击放大事件
+            currentImages = spot.images;
+            currentImageIndex = 0;
+            renderGallery();
+
             var imgEl = document.getElementById('spot-img');
-            if (imgEl) {
-                imgEl.src = spot.image;
-                imgEl.onclick = function() { openImageModal(spot.image); };
-            }
+            imgEl.onclick = function() { 
+                openImageModal(currentImages[currentImageIndex]); 
+            };
 
             document.getElementById('spot-title').innerText = spot.name;
             document.getElementById('spot-desc').innerText = spot.desc;
@@ -687,19 +964,15 @@
 
             var stampBtn = document.getElementById('stamp-btn-action');
             if (stampedSpots.has(spot.id)) {
-                stampBtn.innerText = "✔️ 已打卡成功";
+                stampBtn.innerText = "✔️ 已打卡成功 (点击取消)";
                 stampBtn.style.background = "#81c784";
             } else {
-                stampBtn.innerText = "🚩 现场盖章打卡";
+                stampBtn.innerText = "🚩 盖章打卡";
                 stampBtn.style.background = "#4caf50";
             }
 
-            // 打开卡片时恢复显示并激活
             var card = document.getElementById('spot-info');
-            if (card) {
-                card.style.display = 'block'; // 确保重新打开时能显示
-                card.classList.add('active');
-            }
+            card.classList.add('active');
             
             document.getElementById('stamp-dropdown').classList.remove('active');
         }
@@ -728,7 +1001,7 @@
                 var walkMins = Math.max(1, Math.round(distanceKm * 1000 / 80));
                 distTag.innerText = `🚶 距您当前位置约 ${(distanceKm < 1 ? Math.round(distanceKm*1000)+'米' : distanceKm.toFixed(1)+'公里')} | 步行约 ${walkMins} 分钟`;
             } else {
-                distTag.innerText = "🚶 步行街核心区域内 (开启定位计算精准路径)";
+                distTag.innerText = "🚶 步行街核心区域内 (开启定位计算路径)";
             }
         }
 
@@ -750,7 +1023,6 @@
             window.open(uri, '_blank');
         }
 
-        // 打卡校验逻辑 (配合礼花)
         function triggerManualStamp() {
             if (!currentSelectedSpot) return;
 
@@ -779,77 +1051,69 @@
         function markSpotStamped(spotId) {
             var targetSpot = spots.find(s => s.id === spotId);
     
-            // 情况 1：如果【已经打过卡】，再次点击时触发【取消打卡】
             if (stampedSpots.has(spotId)) {
                 var cancelConfirm = confirm(`确定要取消【${targetSpot ? targetSpot.name : '该景点'}】的打卡记录吗？`);
-                if (!cancelConfirm) return; // 用户点取消操作就不执行后续了
+                if (!cancelConfirm) return;
 
-                // 1. 从 Set 中移除 ID
                 stampedSpots.delete(spotId);
 
-                // 2. 更新 localStorage 本地存储
                 try {
-                localStorage.setItem('stampedSpots', JSON.stringify([...stampedSpots]));
+                    localStorage.setItem('stampedSpots', JSON.stringify([...stampedSpots]));
                 } catch(e){}
 
-                // 3. 更新界面计数
                 document.getElementById('stamp-count').innerText = stampedSpots.size;
 
-                // 4. 移除地图标记的打卡样式
                 var el = document.getElementById('marker-' + spotId);
-                    if(el) el.classList.remove('stamped');
+                if(el) el.classList.remove('stamped');
 
-                // 5. 恢复下拉菜单列表中的样式
-                    var dropItem = document.getElementById('dropdown-item-' + spotId);
-                    if(dropItem && targetSpot) {
-            dropItem.className = 'stamp-item';
-            dropItem.innerHTML = `<span>⚪ ${targetSpot.name}</span><span style="font-size:10px;">未打卡</span>`;
-        }
+                var dropItem = document.getElementById('dropdown-item-' + spotId);
+                if(dropItem && targetSpot) {
+                    dropItem.className = 'stamp-item unvisited';
+                    dropItem.innerHTML = `<span>⏳ ${targetSpot.name}</span><span style="font-size:10px;">未打卡</span>`;
+                }
 
-        // 6. 恢复底部卡片的按钮状态
-        if (currentSelectedSpot && currentSelectedSpot.id === spotId) {
-            var stampBtn = document.getElementById('stamp-btn-action');
-            if (stampBtn) {
-                stampBtn.innerText = "🚩 现场盖章打卡";
-                stampBtn.style.background = "#4caf50";
+                if (currentSelectedSpot && currentSelectedSpot.id === spotId) {
+                    var stampBtn = document.getElementById('stamp-btn-action');
+                    if (stampBtn) {
+                        stampBtn.innerText = "🚩 盖章打卡";
+                        stampBtn.style.background = "#4caf50";
+                    }
+                }
+                return;
+            }
+
+            stampedSpots.add(spotId);
+            
+            try {
+                localStorage.setItem('stampedSpots', JSON.stringify([...stampedSpots]));
+            } catch(e){}
+
+            document.getElementById('stamp-count').innerText = stampedSpots.size;
+
+            var el = document.getElementById('marker-' + spotId);
+            if(el) el.classList.add('stamped');
+
+            var dropItem = document.getElementById('dropdown-item-' + spotId);
+            if(dropItem && targetSpot) {
+                dropItem.className = 'stamp-item visited';
+                dropItem.innerHTML = `<span>✨ ${targetSpot.name}</span><span style="font-size:10px;">已打卡 ✔️</span>`;
+            }
+
+            if (currentSelectedSpot && currentSelectedSpot.id === spotId) {
+                var stampBtn = document.getElementById('stamp-btn-action');
+                if (stampBtn) {
+                    stampBtn.innerText = "✔️ 已打卡成功 (点击取消)";
+                    stampBtn.style.background = "#81c784";
+                }
+            }
+
+            if (stampedSpots.size === spots.length) {
+                setTimeout(function() {
+                    document.getElementById('achievement-modal').style.display = 'flex';
+                }, 500);
             }
         }
-        return; // 执行完取消逻辑后结束
-    }
 
-    // 情况 2：如果【未打卡】，正常进行【打卡盖章】
-    stampedSpots.add(spotId);
-    
-    try {
-        localStorage.setItem('stampedSpots', JSON.stringify([...stampedSpots]));
-    } catch(e){}
-
-    document.getElementById('stamp-count').innerText = stampedSpots.size;
-
-    var el = document.getElementById('marker-' + spotId);
-    if(el) el.classList.add('stamped');
-
-    var dropItem = document.getElementById('dropdown-item-' + spotId);
-    if(dropItem && targetSpot) {
-        dropItem.className = 'stamp-item visited';
-        dropItem.innerHTML = `<span>✨ ${targetSpot.name}</span><span style="font-size:10px;">已打卡 ✔️</span>`;
-    }
-
-    if (currentSelectedSpot && currentSelectedSpot.id === spotId) {
-        var stampBtn = document.getElementById('stamp-btn-action');
-        if (stampBtn) {
-            stampBtn.innerText = "✔️ 已打卡成功 (再次点击可取消)";
-            stampBtn.style.background = "#81c784";
-        }
-    }
-
-    if (stampedSpots.size === spots.length) {
-        setTimeout(function() {
-            document.getElementById('achievement-modal').style.display = 'flex';
-        }, 500);
-    }
-}
-        // 海报生成与下载
         function generatePoster() {
             var count = stampedSpots.size;
             document.getElementById('poster-score').innerText = `${count} / ${spots.length}`;
@@ -903,14 +1167,19 @@
             }
         };
 
-        // 关闭卡片逻辑（已修正：点击关闭后彻底隐藏，不留在屏幕底部）
         function closeCard() {
-            if (isSpeaking) { window.speechSynthesis.cancel(); updateSpeechUI(false); }
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            
+            updateSpeechUI(false);
+            
             playChime();
             var card = document.getElementById('spot-info');
             if (card) {
                 card.classList.remove('active');
-                card.style.display = 'none'; // 强行让图片和卡片彻底隐去
             }
         }
 
@@ -927,7 +1196,7 @@
         var currentRoute = null;
         var routes = {
             food: [[23.1185, 113.2422], [23.1162, 113.2418], [23.1156, 113.2422], [23.1152, 113.2428], [23.1145, 113.2430], [23.1158, 113.2435]],
-            history: [ [23.1180, 113.2430], [23.1175, 113.2415], [23.1132, 113.2450]],
+            history: [[23.1180, 113.2430], [23.1175, 113.2415], [23.1132, 113.2450]],
             folk: [[23.1150, 113.2420], [23.1155, 113.2435], [23.1165, 113.2460], [23.1138, 113.2458]],
             shopping: [[23.1160, 113.2440], [23.1168, 113.2448], [23.1163, 113.2465], [23.1125, 113.2430]]
         };
@@ -961,7 +1230,75 @@
             document.getElementById('route-info-toast').style.display = 'none';
         }
 
-        // 打开全屏大图弹窗
+        // --- 多图片轮播与手势交互 ---
+        function renderGallery() {
+            var img = document.getElementById('spot-img');
+            var dots = document.getElementById('image-dots');
+            var prevBtn = document.getElementById('gallery-prev');
+            var nextBtn = document.getElementById('gallery-next');
+
+            if (!currentImages || currentImages.length === 0) return;
+
+            img.src = currentImages[currentImageIndex];
+            dots.innerHTML = '';
+
+            if (currentImages.length <= 1) {
+                prevBtn.style.display = 'none';
+                nextBtn.style.display = 'none';
+                dots.style.display = 'none';
+                return;
+            }
+
+            prevBtn.style.display = 'flex';
+            nextBtn.style.display = 'flex';
+            dots.style.display = 'block';
+
+            currentImages.forEach(function(item, index) {
+                var dot = document.createElement('span');
+                dot.className = 'image-dot ' + (index === currentImageIndex ? 'active' : '');
+                dot.onclick = function() {
+                    currentImageIndex = index;
+                    renderGallery();
+                };
+                dots.appendChild(dot);
+            });
+        }
+
+        function changeImage(step) {
+            if (!currentImages || currentImages.length <= 1) return;
+
+            currentImageIndex += step;
+            if (currentImageIndex < 0) {
+                currentImageIndex = currentImages.length - 1;
+            } else if (currentImageIndex >= currentImages.length) {
+                currentImageIndex = 0;
+            }
+
+            renderGallery();
+        }
+
+        var galleryContainer = document.getElementById('gallery-container');
+        var touchStartX = 0;
+        var touchEndX = 0;
+
+        galleryContainer.addEventListener('touchstart', function(e) {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        galleryContainer.addEventListener('touchend', function(e) {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, { passive: true });
+
+        function handleSwipe() {
+            var swipeThreshold = 40;
+            if (touchEndX < touchStartX - swipeThreshold) {
+                changeImage(1);
+            } else if (touchEndX > touchStartX + swipeThreshold) {
+                changeImage(-1);
+            }
+        }
+
         function openImageModal(imgSrc) {
             playChime();
             var modalImg = document.getElementById('modal-img-content');
@@ -971,7 +1308,6 @@
             }
         }
 
-        // 关闭全屏大图弹窗
         function closeImageModal() {
             var modal = document.getElementById('image-modal');
             if (modal) {
@@ -979,14 +1315,5 @@
             }
         }
     </script>
-
-    <!-- 图片大图预览弹窗 HTML 结构 (放在 JS 脚本外) -->
-    <div id="image-modal" class="modal-overlay" onclick="closeImageModal()" style="display: none; position: fixed; top:0; left:0; width:100vw; height:100vh; background: rgba(0,0,0,0.75); z-index: 9999; justify-content: center; align-items: center;">
-        <div style="position: relative; max-width: 90vw; max-height: 80vh;">
-            <img id="modal-img-content" src="" style="max-width: 100%; max-height: 80vh; border-radius: 16px; border: 3px solid #ffb74d; box-shadow: 0 10px 30px rgba(0,0,0,0.5); object-fit: contain;">
-            <div style="color: white; margin-top: 10px; font-size: 12px; text-align: center;">点击任意空白处关闭</div>
-        </div>
-    </div>
-
 </body>
 </html>
