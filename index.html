@@ -350,7 +350,41 @@
             transition: background 0.2s;
         }
         .image-dot.active { background: #ff7043; }
+
+
+        /* ===== 西关增强版功能 ===== */
+        #explore-dock{position:fixed;left:50%;bottom:calc(10px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:1200;width:min(96vw,560px);display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:7px;background:rgba(255,255,255,.96);border:2px solid #ffe0b2;border-radius:20px;box-shadow:0 8px 24px rgba(0,0,0,.15);backdrop-filter:blur(8px)}
+        .dock-btn{border:0;background:#fff8ef;color:#6d4c41;border-radius:14px;padding:8px 4px;font-size:11px;font-weight:800;cursor:pointer}.dock-btn.active{background:#ff7043;color:#fff}.dock-btn span{display:block;font-size:18px;margin-bottom:2px}
+        .feature-sheet{position:fixed;left:50%;bottom:-90vh;transform:translateX(-50%);z-index:2500;width:min(94vw,620px);max-height:82vh;overflow:auto;background:#fffdf9;border:3px solid #ffb74d;border-radius:26px 26px 0 0;box-shadow:0 -12px 35px rgba(0,0,0,.22);transition:bottom .35s cubic-bezier(.175,.885,.32,1.275);padding:18px;box-sizing:border-box}
+        .feature-sheet.active{bottom:0}.feature-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.feature-head h3{margin:0;color:#d84315;font-size:19px}.feature-close{border:0;background:#f3f3f3;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px}
+        .feature-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.choice-card{background:#fff;padding:12px;border:2px solid #ffe0b2;border-radius:16px;cursor:pointer}.choice-card.selected{border-color:#ff7043;background:#fff3e0}.choice-card b{display:block;color:#5d4037;margin-bottom:3px}.choice-card span{font-size:11px;color:#8d6e63}
+        .route-result{margin-top:12px;background:linear-gradient(145deg,#fff3e0,#fff8ef);border:2px dashed #ffb74d;border-radius:18px;padding:13px}.route-result h4{margin:0 0 6px;color:#d84315}.route-meta{display:flex;gap:6px;flex-wrap:wrap}.pill{background:#fff;border:1px solid #ffd180;border-radius:999px;padding:4px 8px;font-size:10px;color:#7a5d50}.route-step{padding:8px 0;border-bottom:1px solid #ffe8c2;font-size:12px;color:#5d4037}.route-step:last-child{border-bottom:0}.primary-action{width:100%;border:0;background:#ff7043;color:white;padding:11px;border-radius:13px;font-weight:800;cursor:pointer;margin-top:10px}
+        .mission{display:flex;gap:10px;align-items:flex-start;background:#fff;padding:11px;border:1.5px solid #ffe0b2;border-radius:15px;margin-bottom:8px}.mission .micon{width:34px;height:34px;border-radius:50%;background:#fff3e0;display:flex;align-items:center;justify-content:center;font-size:18px}.mission.done{background:#e8f5e9;border-color:#a5d6a7}.mission.done .micon{background:#c8e6c9}.mission b{color:#5d4037;font-size:12px}.mission p{margin:3px 0 0;color:#8d6e63;font-size:10px;line-height:1.5}.mission button{margin-left:auto;border:0;background:#4caf50;color:#fff;border-radius:10px;padding:6px 8px;font-size:10px;font-weight:800;cursor:pointer}
+        .profile-hero{background:linear-gradient(135deg,#ffcc80,#ff7043);color:white;border-radius:20px;padding:16px;margin-bottom:10px}.profile-score{display:flex;justify-content:space-between;align-items:end}.big-num{font-size:31px;font-weight:900}.progress-line{height:9px;background:rgba(255,255,255,.35);border-radius:99px;overflow:hidden;margin-top:9px}.progress-line i{display:block;height:100%;background:#fff;border-radius:99px}.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.stat-box{background:#fff3e0;border-radius:14px;padding:10px;text-align:center}.stat-box strong{display:block;color:#d84315;font-size:18px}.stat-box span{font-size:10px;color:#8d6e63}
+        .story-card{background:#fff7ea;border-left:4px solid #ff7043;border-radius:15px;padding:12px;margin-bottom:10px}.story-card h4{margin:0 0 6px;color:#d84315}.story-card p{margin:0;color:#6d4c41;font-size:12px;line-height:1.7}.photo-tip{background:#f3e5f5;border:2px solid #ce93d8;border-radius:16px;padding:12px;margin-top:9px}.photo-tip b{color:#7b1fa2}.tag-list{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}.tag{font-size:10px;background:#fff;border:1px solid #ffd180;border-radius:999px;padding:4px 7px;color:#7a5d50}
+        #mission-badge{position:fixed;right:18px;bottom:calc(88px + env(safe-area-inset-bottom));z-index:1100;background:#fff;border:2px solid #ffb74d;border-radius:18px;padding:7px 9px;font-size:10px;font-weight:800;color:#d84315;box-shadow:0 4px 12px rgba(0,0,0,.12);cursor:pointer}
+        .toast-mini{position:fixed;left:50%;bottom:calc(82px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:4000;background:#5d4037;color:#fff;padding:9px 14px;border-radius:99px;font-size:11px;opacity:0;pointer-events:none;transition:opacity .25s}.toast-mini.show{opacity:1}
+
+        /* 景点详情打开时自动收起底部导航，避免挡住详情卡片按钮 */
+        #explore-dock{transition:transform .28s ease, opacity .22s ease, visibility .22s ease}
+        body.spot-card-open #explore-dock{transform:translate(-50%, calc(100% + 18px));opacity:0;visibility:hidden;pointer-events:none}
+        body.spot-card-open #mission-badge{transform:translateY(120px);opacity:0;pointer-events:none}
+        #mission-badge{transition:transform .28s ease, opacity .22s ease}
+        @media(max-width:520px){
+            .feature-sheet{width:100%;max-height:84vh;border-left:0;border-right:0}
+            .feature-grid{grid-template-columns:repeat(2,1fr)}
+            #explore-dock{width:calc(100vw - 14px);bottom:calc(8px + env(safe-area-inset-bottom))}
+            .dock-btn{font-size:10px}
+            body.spot-card-open .info-card{padding-bottom:calc(18px + env(safe-area-inset-bottom))}
+        }
+
     </style>
+
+<style>
+/* 最终兜底：详情卡片激活时，底部导航永远不拦截点击 */
+body.spot-card-open #explore-dock,
+body.spot-card-open #mission-badge { pointer-events:none !important; }
+</style>
 </head>
 <body>
 
@@ -524,6 +558,55 @@
             <img id="modal-img-content" src="" style="max-width: 100%; max-height: 80vh; border-radius: 16px; border: 3px solid #ffb74d; box-shadow: 0 10px 30px rgba(0,0,0,0.5); object-fit: contain;">
             <div style="color: white; margin-top: 10px; font-size: 12px; text-align: center;">点击任意空白处关闭</div>
         </div>
+    </div>
+
+
+
+    <div id="mission-badge" onclick="openFeature('missions')">🧭 探索任务 <span id="mission-count">0/5</span></div>
+    <div id="toast-mini" class="toast-mini"></div>
+
+    <div id="explore-dock">
+        <button class="dock-btn active" id="dock-map" onclick="closeFeatureSheets()"><span>🗺️</span>地图</button>
+        <button class="dock-btn" id="dock-route" onclick="openFeature('route')"><span>🧭</span>怎么玩</button>
+        <button class="dock-btn" id="dock-mission" onclick="openFeature('missions')"><span>🎯</span>寻宝</button>
+        <button class="dock-btn" id="dock-me" onclick="openFeature('profile')"><span>👤</span>我的</button>
+    </div>
+
+    <div id="feature-route" class="feature-sheet">
+        <div class="feature-head"><h3>🧭 今天怎么玩？</h3><button class="feature-close" onclick="closeFeatureSheets()">✕</button></div>
+        <div style="font-size:11px;color:#8d6e63;margin-bottom:8px">选择你的时间与兴趣，系统会从现有景点中自动组合路线。</div>
+        <div style="font-size:12px;font-weight:800;color:#5d4037;margin:8px 0">我有多少时间？</div>
+        <div class="feature-grid" id="time-choices">
+            <div class="choice-card selected" data-time="60" onclick="selectRouteChoice('time',60,this)"><b>⏱️ 1小时</b><span>快速体验精华</span></div>
+            <div class="choice-card" data-time="120" onclick="selectRouteChoice('time',120,this)"><b>⏱️ 2小时</b><span>吃喝玩拍都兼顾</span></div>
+            <div class="choice-card" data-time="180" onclick="selectRouteChoice('time',180,this)"><b>⏱️ 3小时</b><span>深度漫游西关</span></div>
+            <div class="choice-card" data-time="240" onclick="selectRouteChoice('time',240,this)"><b>☀️ 半天</b><span>慢慢逛慢慢吃</span></div>
+        </div>
+        <div style="font-size:12px;font-weight:800;color:#5d4037;margin:12px 0 8px">我最想要什么？</div>
+        <div class="feature-grid" id="interest-choices">
+            <div class="choice-card selected" data-interest="mixed" onclick="selectRouteChoice('interest','mixed',this)"><b>✨ 都想要</b><span>经典综合路线</span></div>
+            <div class="choice-card" data-interest="food" onclick="selectRouteChoice('interest','food',this)"><b>🍜 吃美食</b><span>老字号与西关小吃</span></div>
+            <div class="choice-card" data-interest="history" onclick="selectRouteChoice('interest','history',this)"><b>🏛️ 看历史</b><span>古迹与人文故事</span></div>
+            <div class="choice-card" data-interest="photo" onclick="selectRouteChoice('interest','photo',this)"><b>📸 拍好看</b><span>街景与拍照机位</span></div>
+        </div>
+        <button class="primary-action" onclick="generateSmartRoute()">✨ 生成我的专属路线</button>
+        <div id="smart-route-result"></div>
+    </div>
+
+    <div id="feature-missions" class="feature-sheet">
+        <div class="feature-head"><h3>🎯 西关寻宝挑战</h3><button class="feature-close" onclick="closeFeatureSheets()">✕</button></div>
+        <div style="font-size:11px;color:#8d6e63;margin-bottom:10px">完成任务会累计探索值。部分任务可在景点附近自动完成，其余可作为线下观察挑战。</div>
+        <div id="missions-list"></div>
+    </div>
+
+    <div id="feature-profile" class="feature-sheet">
+        <div class="feature-head"><h3>👤 我的西关之旅</h3><button class="feature-close" onclick="closeFeatureSheets()">✕</button></div>
+        <div id="profile-content"></div>
+    </div>
+
+    <div id="feature-story" class="feature-sheet">
+        <div class="feature-head"><h3>📖 西关故事馆</h3><button class="feature-close" onclick="closeFeatureSheets()">✕</button></div>
+        <div id="story-content"></div>
     </div>
 
     <script>
@@ -936,6 +1019,7 @@
         }
 
         function openSpotCard(spot) {
+            document.body.classList.add('spot-card-open');
             if (currentAudio) {
                 currentAudio.pause();
                 currentAudio = null;
@@ -1168,6 +1252,7 @@
         };
 
         function closeCard() {
+            document.body.classList.remove('spot-card-open');
             if (currentAudio) {
                 currentAudio.pause();
                 currentAudio = null;
@@ -1314,6 +1399,92 @@
                 modal.style.display = 'none';
             }
         }
+
+
+        // ===== 增强功能数据 =====
+        var featureState = { routeTime: 60, routeInterest: 'mixed' };
+        var explorationState = { missions: {}, distanceKm: 0, favorites: [] };
+        try { explorationState = Object.assign(explorationState, JSON.parse(localStorage.getItem('xgExploreState') || '{}')); } catch(e) {}
+        var missionDefinitions = [
+            {id:'arch', icon:'🏮', title:'找到一处骑楼细节', desc:'观察骑楼的拱门、满洲窗或柱饰。', spotId:1, points:20},
+            {id:'food', icon:'🍡', title:'发现一家老字号', desc:'打开任意美食景点详情并完成打卡。', type:'food', points:20},
+            {id:'history', icon:'🏛️', title:'听完一段历史故事', desc:'打开历史类景点并点击“西关故事”。', type:'history', points:20},
+            {id:'photo', icon:'📸', title:'完成一次西关拍立得', desc:'在任意景点使用 AR 合影功能。', points:20},
+            {id:'stamps3', icon:'🎫', title:'集齐 3 枚西关印章', desc:'完成任意 3 个景点打卡。', points:30}
+        ];
+        var storyMap = {
+            1:{title:'骑楼为什么长成这样？',text:'骑楼把建筑上层向街道延伸，形成连续的遮雨空间。你现在走过的这段街景，是广州传统商业空间非常鲜明的城市记忆。'},
+            2:{title:'茶楼不只是喝茶',text:'在老广州，“饮茶”常常也是社交、谈生意和消磨时光。找一张木桌、一壶茶、几笼点心，你会更容易理解西关生活的节奏。'},
+            6:{title:'西来初地的城市记忆',text:'华林禅寺与广州城市发展的历史联系很深。到这里时可以放慢脚步，留意寺院格局、街巷尺度与周边老城生活的交错。'},
+            11:{title:'从西关大屋看广州家庭生活',text:'西关大屋的天井、厅堂和窄长进深，都是传统广州家庭空间的独特记忆。李小龙祖居也提供了一个理解西关民居的窗口。'}
+        };
+        var photoMap = {
+            1:{title:'骑楼连廊机位',tip:'站在骑楼连廊中轴线，利用连续拱门制造纵深感；傍晚更适合拍暖色街景。'},
+            4:{title:'老戏院门头',tip:'建议站在街对面稍微拉远，完整收入复古门头与街景。'},
+            17:{title:'玉器街街拍',tip:'适合拍“人在街中”的生活感照片，人物站在画面三分之一位置更自然。'}
+        };
+        function saveExploreState(){ try{ localStorage.setItem('xgExploreState', JSON.stringify(explorationState)); }catch(e){} }
+        function toastMini(text){ var el=document.getElementById('toast-mini'); el.innerText=text; el.classList.add('show'); clearTimeout(window._xgToast); window._xgToast=setTimeout(()=>el.classList.remove('show'),2200); }
+        function closeFeatureSheets(){ document.querySelectorAll('.feature-sheet').forEach(x=>x.classList.remove('active')); document.querySelectorAll('.dock-btn').forEach(x=>x.classList.remove('active')); document.getElementById('dock-map').classList.add('active'); }
+        function openFeature(type){ closeFeatureSheets(); if(type==='route'){document.getElementById('feature-route').classList.add('active');document.getElementById('dock-route').classList.add('active');}
+            if(type==='missions'){renderMissions();document.getElementById('feature-missions').classList.add('active');document.getElementById('dock-mission').classList.add('active');}
+            if(type==='profile'){renderProfile();document.getElementById('feature-profile').classList.add('active');document.getElementById('dock-me').classList.add('active');} }
+        function selectRouteChoice(kind,value,el){ featureState[kind==='time'?'routeTime':'routeInterest']=value; var parent=el.parentElement; parent.querySelectorAll('.choice-card').forEach(c=>c.classList.remove('selected')); el.classList.add('selected'); }
+        function interestScore(spot, interest){ if(interest==='food') return spot.type==='food'?4:(spot.type==='landmark'?1:0); if(interest==='history') return spot.type==='history'?4:(spot.type==='landmark'?1:0); if(interest==='photo') return (photoMap[spot.id]?4:spot.type==='landmark'?3:1); return spot.type==='food'||spot.type==='history'||spot.type==='landmark'?3:1; }
+        function generateSmartRoute(){
+            var mins=featureState.routeTime, interest=featureState.routeInterest;
+            var maxStops=mins<=60?4:mins<=120?6:mins<=180?8:10;
+            var ranked=spots.slice().sort((a,b)=>interestScore(b,interest)-interestScore(a,interest));
+            var selected=ranked.slice(0,maxStops);
+            var routePts=selected.map(s=>[s.lat,s.lng]);
+            clearRoute();
+            if(routePts.length>1){ currentRoute=L.polyline(routePts,{color:'#ff7043',weight:7,opacity:.88,dashArray:'8,10'}).addTo(map); map.fitBounds(currentRoute.getBounds(),{padding:[90,140]}); }
+            var labels={mixed:'综合体验',food:'美食探索',history:'历史文化',photo:'街拍摄影'};
+            var html=`<div class="route-result"><h4>✨ ${mins>=240?'半天':mins+'分钟'} · ${labels[interest]}路线</h4><div class="route-meta"><span class="pill">🚶 ${selected.length} 个停留点</span><span class="pill">⏱️ 预计 ${Math.min(mins, selected.length*18+10)} 分钟</span><span class="pill">📍 以现有景点数据生成</span></div>`;
+            selected.forEach((s,i)=> html+=`<div class="route-step"><b>${i+1}. ${s.name}</b><br><span style="color:#8d6e63">${s.desc}</span></div>`);
+            html+=`<button class="primary-action" onclick="startSmartRoute(${JSON.stringify(selected.map(s=>s.id))})">🚶 从第1站开始探索</button></div>`;
+            document.getElementById('smart-route-result').innerHTML=html; toastMini('已生成你的专属路线');
+        }
+        function startSmartRoute(ids){ if(!ids.length)return; var first=spots.find(s=>s.id===ids[0]); if(first){ closeFeatureSheets(); jumpToSpot(first); } }
+        function renderMissions(){
+            var doneCount=0, box=document.getElementById('missions-list'); box.innerHTML='';
+            missionDefinitions.forEach(m=>{
+                var done=!!explorationState.missions[m.id]; if(done)doneCount++;
+                var action='markMissionDone('+JSON.stringify(m.id)+')';
+                var button=done?'<button disabled>已完成</button>':`<button onclick='${action}'>完成</button>`;
+                box.innerHTML+=`<div class="mission ${done?'done':''}"><div class="micon">${done?'✅':m.icon}</div><div style="flex:1"><b>${m.title}</b><p>${m.desc}</p></div>${button}</div>`;
+            });
+            document.getElementById('mission-count').innerText=`${doneCount}/5`;
+        }
+        function markMissionDone(id){ if(explorationState.missions[id])return; explorationState.missions[id]=Date.now(); saveExploreState(); fireConfetti(); renderMissions(); renderProfile(); toastMini('🎉 探索任务完成 +20'); }
+        function updateMissionAuto(){
+            if(stampedSpots.size>=3 && !explorationState.missions.stamps3) markMissionDone('stamps3');
+            if(currentSelectedSpot && currentSelectedSpot.type==='food' && stampedSpots.has(currentSelectedSpot.id) && !explorationState.missions.food) markMissionDone('food');
+            if(currentSelectedSpot && currentSelectedSpot.type==='history' && !explorationState.missions.history) markMissionDone('history');
+        }
+        function renderProfile(){
+            var missionDone=Object.keys(explorationState.missions||{}).length, stamp=stampedSpots.size, score=stamp*15+missionDone*20, pct=Math.round(stamp/spots.length*100), badge=score>=220?'👑 西关大师':score>=140?'🥇 西关通':score>=70?'🥈 西关熟客':'🥉 西关新人';
+            document.getElementById('profile-content').innerHTML=`<div class="profile-hero"><div style="font-size:12px">你的探索称号</div><div class="profile-score"><div><div class="big-num">${badge}</div><div style="font-size:10px;opacity:.9">探索值 ${score}</div></div><div style="text-align:right"><div style="font-size:22px;font-weight:900">${stamp}/${spots.length}</div><div style="font-size:10px">景点已打卡</div></div></div><div class="progress-line"><i style="width:${pct}%"></i></div></div><div class="stat-grid"><div class="stat-box"><strong>${stamp}</strong><span>打卡景点</span></div><div class="stat-box"><strong>${missionDone}</strong><span>完成任务</span></div><div class="stat-box"><strong>${score}</strong><span>探索值</span></div></div><div style="margin-top:10px;background:#fff;padding:12px;border:1.5px solid #ffe0b2;border-radius:15px"><b style="color:#5d4037">🏮 你的下一目标</b><div style="font-size:11px;color:#8d6e63;margin-top:5px">${stamp<3?'再打卡 '+(3-stamp)+' 个景点，解锁“3枚印章”任务。':missionDone<5?'再完成 '+(5-missionDone)+' 个寻宝任务，冲击西关大师。':'恭喜，你已经完成当前体验版全部核心任务！'}</div><button class="primary-action" onclick="generatePoster();closeFeatureSheets()">📸 生成我的旅行海报</button></div>`;
+        }
+        function openStoryForSpot(spot){ var data=storyMap[spot.id]||{title:'走进这处西关街景',text:spot.desc+'。到现场后不妨抬头看看建筑细节，再听一遍语音讲解，让这一站从“看见”变成“理解”。'}; document.getElementById('story-content').innerHTML=`<div class="story-card"><h4>${data.title}</h4><p>${data.text}</p></div><div style="font-size:11px;color:#8d6e63">📍 当前景点：${spot.name}</div><div class="tag-list"><span class="tag">📖 30秒故事</span><span class="tag">🎧 可听语音</span><span class="tag">🏮 西关文化</span></div><button class="primary-action" onclick="closeFeatureSheets();toggleSpeech()">🎧 听这一站</button>`; closeFeatureSheets(); document.getElementById('feature-story').classList.add('active'); }
+        function openPhotoTip(spot){ var data=photoMap[spot.id]||{title:'西关生活感机位',tip:'建议利用骑楼、招牌和行人形成层次，人物尽量靠近街景的三分之一位置。'}; document.getElementById('story-content').innerHTML=`<div class="photo-tip"><b>📸 ${data.title}</b><p style="margin:6px 0 0;color:#6d4c41;font-size:12px;line-height:1.7">${data.tip}</p></div><div style="margin-top:10px;font-size:11px;color:#8d6e63">建议动作：打开相机 → 选横构图 → 留一点骑楼空间 → 再使用“AR合影”保存纪念照。</div><button class="primary-action" onclick="closeFeatureSheets();startARPhoto()">📷 现在拍一张</button>`; closeFeatureSheets(); document.getElementById('feature-story').classList.add('active'); }
+
+        // 在现有详情卡片中加入“故事 / 机位”快捷入口
+        function enhanceSpotCardButtons(){
+            var group=document.querySelector('#spot-info .btn-group'); if(!group || document.getElementById('story-shortcut')) return;
+            var wrap=document.createElement('div'); wrap.id='story-shortcut'; wrap.style.cssText='display:flex;gap:8px;margin:0 0 8px';
+            wrap.innerHTML=`<button style="flex:1;border:1.5px solid #ffb74d;background:#fff8ef;color:#d84315;padding:8px;border-radius:11px;font-size:11px;font-weight:800;cursor:pointer" onclick="openStoryForSpot(currentSelectedSpot)">📖 西关故事</button><button style="flex:1;border:1.5px solid #ce93d8;background:#f3e5f5;color:#7b1fa2;padding:8px;border-radius:11px;font-size:11px;font-weight:800;cursor:pointer" onclick="openPhotoTip(currentSelectedSpot)">📸 拍照机位</button>`;
+            group.parentNode.insertBefore(wrap,group);
+        }
+        enhanceSpotCardButtons();
+        var _openSpotCard=openSpotCard;
+        openSpotCard=function(spot){ _openSpotCard(spot); enhanceSpotCardButtons(); updateMissionAuto(); };
+        var _handleARPhoto=handleARPhoto;
+        handleARPhoto=function(event){ _handleARPhoto(event); if(currentSelectedSpot && !explorationState.missions.photo) markMissionDone('photo'); };
+        var _markSpotStamped=markSpotStamped;
+        markSpotStamped=function(id){ _markSpotStamped(id); updateMissionAuto(); renderProfile(); };
+        renderMissions(); renderProfile();
+
     </script>
 </body>
 </html>
